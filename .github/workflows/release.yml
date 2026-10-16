@@ -11,7 +11,7 @@ on:
         required: true
         default: 'v1.0.0'
       paper_api_version:
-        description: 'paper-api version to build against (blank = newest matching the pom api version)'
+        description: 'paper-api version to build against (blank = the version pinned in pom.xml)'
         required: false
         default: ''
 
@@ -27,31 +27,19 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '25'
+          java-version: '21'
           cache: maven
 
       - name: Resolve the paper-api version
         id: paper
         run: |
           set -euo pipefail
+          # The plugin is deliberately built against the OLDEST supported API, pinned in pom.xml,
+          # so the release jar runs on every server from that version up.
           requested='${{ github.event.inputs.paper_api_version }}'
-          if [ -n "$requested" ]; then
-            echo "version=$requested" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          # plugin.yml's api-version doubles as the Minecraft version we target.
-          prefix=$(sed -n 's|.*<plugin.api.version>\(.*\)</plugin.api.version>.*|\1|p' pom.xml)
-          curl -sSfL --retry 3 \
-            "https://repo.papermc.io/repository/maven-public/io/papermc/paper/paper-api/maven-metadata.xml" \
-            -o metadata.xml
-          version=$(grep -o '<version>[^<]*</version>' metadata.xml \
-            | sed -e 's|</\{0,1\}version>||g' \
-            | grep "^${prefix}\." \
-            | tail -1)
+          version="$requested"
           if [ -z "$version" ]; then
-            echo "No paper-api build published for $prefix" >&2
-            grep -o '<version>[^<]*</version>' metadata.xml | tail -5 >&2
-            exit 1
+            version=$(sed -n 's|.*<paper.api.version>\(.*\)</paper.api.version>.*|\1|p' pom.xml)
           fi
           echo "Using paper-api $version"
           echo "version=$version" >> "$GITHUB_OUTPUT"

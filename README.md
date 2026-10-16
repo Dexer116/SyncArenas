@@ -9,12 +9,21 @@ the section they happened in. A reset then touches only those sections - if the 
 sections and two of them were damaged, two sections are read, decompressed and rewritten, and the
 other 4998 are never looked at.
 
-## Requirements
+## Supported servers
 
-* CanvasMC, Folia, or any Paper 26.3 server (the plugin declares `folia-supported: true` and uses
-  only the region/async schedulers, so it behaves identically on plain Paper - there is simply one
-  region to spread the work over instead of many).
-* Java 25 (same as the server).
+One jar covers every version from **1.21.11** up, because it is compiled against the 1.21.11 API and
+declares `api-version: 1.21.11` - a server refuses a plugin whose api-version is *newer* than its
+own, never older:
+
+| Server | Status |
+| --- | --- |
+| CanvasMC / Folia 1.21.11, 26.1.2, 26.2, 26.3 | supported, region threading in use |
+| Paper 1.21.11 and newer | supported, one region instead of many |
+
+The jar is Java 21 bytecode, so it loads on a 1.21.11 server (Java 21) and on 26.x (Java 25) alike.
+`folia-supported: true` is declared; everything the plugin calls - the region, async and entity
+schedulers included - has existed in the Paper API since 1.20.1 and is unchanged through 26.3, so
+no version specific code paths are needed.
 
 ## Commands
 
@@ -179,7 +188,7 @@ Lower the budget - a reset simply takes more ticks.
 ## Building
 
 ```bash
-mvn clean package      # -> target/SyncArenas-1.0.0.jar
+mvn clean package      # -> target/SyncArenas-1.0.1.jar
 mvn test               # format and geometry tests, no server needed
 ```
 
@@ -188,14 +197,17 @@ the newest `paper-api` build matching `plugin.yml`'s `api-version`, runs `mvn ve
 gate the release, and publishes the jar. Push a `v*` tag or run the workflow manually.
 
 Paper is not published to Maven Central, so the build resolves `paper-api` from
-`https://repo.papermc.io/repository/maven-public/`. Since Minecraft 26.3 Paper's artifact version is
-`<mcVersion>.build.<number>-<channel>`; the pom pins `26.3.build.199-stable`. To build against a
-different build, override it:
+`https://repo.papermc.io/repository/maven-public/`. The pom pins the **oldest** supported API
+(`1.21.11-R0.1-SNAPSHOT`) on purpose: that is what makes a single jar load on everything newer. A
+JDK 21 is enough to build it.
+
+Compiling against a newer API also works, but the resulting jar only loads on servers at least that
+new - and since Minecraft 26.3 the artifact version is `<mcVersion>.build.<number>-<channel>`, which
+needs a JDK 25:
 
 ```bash
-mvn -Dpaper.api.version=26.3.build.210-stable clean package
+mvn -Dpaper.api.version=26.3.build.199-stable -Dmaven.compiler.release=25 clean package
 ```
 
-or edit the `paper.api.version` property in [`pom.xml`](pom.xml). Building against the
-`io.canvasmc.canvas:canvas-api` artifact from `https://maven.canvasmc.io/public/` works as well -
-the plugin only uses API that Canvas inherits from Paper.
+Building against `io.canvasmc.canvas:canvas-api` from `https://maven.canvasmc.io/public/` works as
+well - the plugin only uses API that Canvas inherits from Paper.

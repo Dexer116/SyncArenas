@@ -6,7 +6,7 @@
 
     <groupId>dev.dexer</groupId>
     <artifactId>syncarenas</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
     <packaging>jar</packaging>
 
     <name>SyncArenas</name>
@@ -14,13 +14,14 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <!-- Paper/Folia targets Java 25 as of Minecraft 26.3, so the API classes are Java 25
-             bytecode and a JDK 25 (or newer) is required to compile against them. -->
-        <maven.compiler.release>25</maven.compiler.release>
-        <!-- Pick the exact build you develop against; see README.md ("Building"). -->
-        <paper.api.version>26.3.build.199-stable</paper.api.version>
-        <!-- Value written into plugin.yml's api-version. -->
-        <plugin.api.version>26.3</plugin.api.version>
+        <!-- Built against the OLDEST supported API so one jar runs on 1.21.11 through 26.3.
+             Java 21 bytecode, because a 1.21.11 server runs on Java 21; newer servers on Java 25
+             load it just as well. Do not raise these to a newer API unless you intend to drop the
+             older servers - see README.md ("Supported servers"). -->
+        <maven.compiler.release>21</maven.compiler.release>
+        <paper.api.version>1.21.11-R0.1-SNAPSHOT</paper.api.version>
+        <!-- Value written into plugin.yml's api-version: the minimum the plugin needs. -->
+        <plugin.api.version>1.21.11</plugin.api.version>
         <junit.version>5.11.4</junit.version>
     </properties>
 

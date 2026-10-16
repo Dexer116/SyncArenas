@@ -3,6 +3,8 @@ package dev.dexer.syncarenas;
 import dev.dexer.syncarenas.arena.ArenaManager;
 import dev.dexer.syncarenas.command.ArenaCommand;
 import dev.dexer.syncarenas.listener.BlockTrackingListener;
+import dev.dexer.syncarenas.listener.FluidFlowTrackingListener;
+import dev.dexer.syncarenas.listener.PistonTrackingListener;
 import dev.dexer.syncarenas.listener.WandListener;
 import dev.dexer.syncarenas.service.CaptureService;
 import dev.dexer.syncarenas.service.RestoreService;
@@ -10,6 +12,7 @@ import dev.dexer.syncarenas.service.SelectionService;
 import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import java.util.concurrent.TimeUnit;
 import org.bukkit.command.PluginCommand;
+import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 /**
@@ -45,8 +48,17 @@ public final class SyncArenas extends JavaPlugin {
 
         this.arenas.loadAll();
 
-        this.getServer().getPluginManager().registerEvents(new BlockTrackingListener(this), this);
-        this.getServer().getPluginManager().registerEvents(new WandListener(this), this);
+        final PluginManager events = this.getServer().getPluginManager();
+        events.registerEvents(new BlockTrackingListener(this), this);
+        events.registerEvents(new WandListener(this), this);
+        // The two high frequency sources are only hooked when they are actually wanted, so turning
+        // them off in the config means no handler runs for them at all.
+        if (this.settings.trackFluidFlow()) {
+            events.registerEvents(new FluidFlowTrackingListener(this), this);
+        }
+        if (this.settings.trackPistons()) {
+            events.registerEvents(new PistonTrackingListener(this), this);
+        }
 
         final PluginCommand command = this.getCommand("arena");
         if (command == null) {
@@ -65,7 +77,9 @@ public final class SyncArenas extends JavaPlugin {
 
         this.getLogger().info("Ready: " + this.settings.restoreBudgetNanos() / 1000L
             + "us region budget, up to " + this.settings.restoreChunksAtOnce()
-            + " chunks restored at once.");
+            + " chunks restored at once; fluid flow tracking "
+            + (this.settings.trackFluidFlow() ? "on" : "off") + ", piston tracking "
+            + (this.settings.trackPistons() ? "on" : "off") + ".");
     }
 
     @Override

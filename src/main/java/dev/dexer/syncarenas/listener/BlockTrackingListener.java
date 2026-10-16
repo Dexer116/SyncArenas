@@ -4,7 +4,6 @@ import dev.dexer.syncarenas.SyncArenas;
 import dev.dexer.syncarenas.arena.ArenaManager;
 import java.util.List;
 import org.bukkit.Bukkit;
-import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.event.EventHandler;
@@ -15,12 +14,9 @@ import org.bukkit.event.block.BlockBurnEvent;
 import org.bukkit.event.block.BlockExplodeEvent;
 import org.bukkit.event.block.BlockFadeEvent;
 import org.bukkit.event.block.BlockFormEvent;
-import org.bukkit.event.block.BlockFromToEvent;
 import org.bukkit.event.block.BlockGrowEvent;
 import org.bukkit.event.block.BlockIgniteEvent;
 import org.bukkit.event.block.BlockMultiPlaceEvent;
-import org.bukkit.event.block.BlockPistonExtendEvent;
-import org.bukkit.event.block.BlockPistonRetractEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.block.BlockSpreadEvent;
 import org.bukkit.event.block.CauldronLevelChangeEvent;
@@ -48,34 +44,23 @@ import org.bukkit.event.world.WorldUnloadEvent;
  *
  * <p>Everything runs at {@link EventPriority#MONITOR} with {@code ignoreCancelled = true}, so a
  * change another plugin vetoes is never counted.
+ *
+ * <p>The two opt-out sources, fluid flow and piston movement, live in
+ * {@link FluidFlowTrackingListener} and {@link PistonTrackingListener} so that turning them off in
+ * the config registers no handler for them at all.
  */
 public final class BlockTrackingListener implements Listener {
 
     private final SyncArenas plugin;
     private final ArenaManager arenas;
-    private final boolean trackFluidFlow;
-    private final boolean trackPistons;
 
     public BlockTrackingListener(final SyncArenas plugin) {
         this.plugin = plugin;
         this.arenas = plugin.arenas();
-        this.trackFluidFlow = plugin.settings().trackFluidFlow();
-        this.trackPistons = plugin.settings().trackPistons();
-    }
-
-    private void mark(final World world, final int x, final int y, final int z) {
-        final ArenaManager.WorldArenas[] index = this.arenas.index();
-        for (int i = 0; i < index.length; i++) {
-            final ArenaManager.WorldArenas entry = index[i];
-            if (entry.world() == world) {
-                entry.markBlock(x, y, z);
-                return;
-            }
-        }
     }
 
     private void mark(final Block block) {
-        this.mark(block.getWorld(), block.getX(), block.getY(), block.getZ());
+        this.arenas.markBlock(block.getWorld(), block.getX(), block.getY(), block.getZ());
     }
 
     private void markBlocks(final List<Block> blocks) {
@@ -87,7 +72,7 @@ public final class BlockTrackingListener implements Listener {
     private void markStates(final List<BlockState> states) {
         for (int i = 0; i < states.size(); i++) {
             final BlockState state = states.get(i);
-            this.mark(state.getWorld(), state.getX(), state.getY(), state.getZ());
+            this.arenas.markBlock(state.getWorld(), state.getX(), state.getY(), state.getZ());
         }
     }
 
@@ -204,44 +189,6 @@ public final class BlockTrackingListener implements Listener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onEntityChangeBlock(final EntityChangeBlockEvent event) {
         this.mark(event.getBlock());
-    }
-
-    // --- opt out able, higher frequency ---------------------------------------------------------
-
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onFromTo(final BlockFromToEvent event) {
-        if (!this.trackFluidFlow) {
-            return;
-        }
-        this.mark(event.getToBlock());
-    }
-
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onPistonExtend(final BlockPistonExtendEvent event) {
-        if (!this.trackPistons) {
-            return;
-        }
-        this.mark(event.getBlock());
-        final List<Block> blocks = event.getBlocks();
-        for (int i = 0; i < blocks.size(); i++) {
-            final Block block = blocks.get(i);
-            this.mark(block);
-            this.mark(block.getRelative(event.getDirection()));
-        }
-    }
-
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onPistonRetract(final BlockPistonRetractEvent event) {
-        if (!this.trackPistons) {
-            return;
-        }
-        this.mark(event.getBlock());
-        final List<Block> blocks = event.getBlocks();
-        for (int i = 0; i < blocks.size(); i++) {
-            final Block block = blocks.get(i);
-            this.mark(block);
-            this.mark(block.getRelative(event.getDirection()));
-        }
     }
 
     // --- index maintenance ----------------------------------------------------------------------

@@ -13,6 +13,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
+import org.bukkit.block.Block;
 
 /**
  * Registry of arenas plus the lookup structure the block listeners use.
@@ -98,6 +99,26 @@ public final class ArenaManager {
     /** The lookup array used by the listeners. Never null, may be empty. */
     public WorldArenas[] index() {
         return this.index;
+    }
+
+    /**
+     * Marks the section containing this block in every arena of that world. This is the hot path
+     * the block listeners call: one reference comparison per loaded world that has arenas, one
+     * union box test, then a packed {@code long} into a concurrent set. No allocation, no blocking.
+     */
+    public void markBlock(final World world, final int x, final int y, final int z) {
+        final WorldArenas[] current = this.index;
+        for (int i = 0; i < current.length; i++) {
+            final WorldArenas entry = current[i];
+            if (entry.world() == world) {
+                entry.markBlock(x, y, z);
+                return;
+            }
+        }
+    }
+
+    public void markBlock(final Block block) {
+        this.markBlock(block.getWorld(), block.getX(), block.getY(), block.getZ());
     }
 
     public void loadAll() {

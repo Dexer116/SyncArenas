@@ -84,8 +84,13 @@ event (everything is `MONITOR` + `ignoreCancelled`).
 Block break/place (including multi block placements), bucket empty/fill, block and entity
 explosions, TNT priming, burning, igniting, fading, forming, spreading, growing, leaf decay,
 structure growth, sponge absorption, cauldron and fluid level changes, moisture changes, and
-entity caused block changes (endermen, falling blocks, ravagers, ...). Fluid flow and piston
-movement are included too and can be switched off in the config if your arenas have neither.
+entity caused block changes (endermen, falling blocks, ravagers, ...).
+
+Fluid flow and piston movement are tracked too, but each sits in its own listener behind
+`tracking.track-fluid-flow` and `tracking.track-pistons`. Setting either to `false` means that
+listener is never registered, so the plugin does not appear in those events' handler lists at all -
+worth doing for fluid flow in particular, which is one of the most frequent block changes in the
+game. Both need a server restart to apply.
 
 Unrestored sections are never lost: they are written into the arena's `.json` (every
 `tracking.autosave-minutes` and on shutdown), and if a reset cannot finish a chunk - world
@@ -167,8 +172,8 @@ The knobs that matter:
 | `capture.max-concurrent-chunks` | `4` | Chunks snapshotted at once during `/arena create`. |
 | `capture.compression-level` | `4` | Deflate level for section payloads (0-9). |
 | `tracking.autosave-minutes` | `5` | How often the dirty sets are persisted. |
-| `tracking.track-fluid-flow` | `true` | Treat fluid spread as damage. |
-| `tracking.track-pistons` | `true` | Treat piston movement as damage. |
+| `tracking.track-fluid-flow` | `true` | Treat fluid spread as damage; `false` registers no handler for it. |
+| `tracking.track-pistons` | `true` | Treat piston movement as damage; `false` registers no handler for it. |
 | `limits.max-arena-blocks` | `0` | Refuse larger arenas (0 = no limit). |
 | `wand.material` | `GOLDEN_AXE` | The selection item. |
 
@@ -188,7 +193,7 @@ Lower the budget - a reset simply takes more ticks.
 ## Building
 
 ```bash
-mvn clean package      # -> target/SyncArenas-1.0.1.jar
+mvn clean package      # -> target/SyncArenas-1.0.2.jar
 mvn test               # format and geometry tests, no server needed
 ```
 

@@ -47,11 +47,16 @@ tracking:
   # set is still saved on shutdown).
   autosave-minutes: 5
 
-  # Fluid flow (water/lava spreading) marks sections dirty. Turn this off only
-  # if your arenas contain no fluids at all.
+  # Fluid flow (water/lava spreading) marks sections dirty. Fluid flow is one of
+  # the most frequent block changes in the game, so if your arenas contain no
+  # water or lava at all, turn this off: the handler is then never registered and
+  # the plugin costs literally nothing on those events.
+  # Needs a server restart to take effect.
   track-fluid-flow: true
 
-  # Pistons moving blocks mark sections dirty.
+  # Pistons moving blocks mark sections dirty - the piston, every block it moves,
+  # and where those blocks land. Off means no piston handler is registered at all.
+  # Needs a server restart to take effect.
   track-pistons: true
 
 limits:

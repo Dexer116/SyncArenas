@@ -1,0 +1,22 @@
+name: SyncArenas
+version: '${project.version}'
+main: dev.dexer.syncarenas.SyncArenas
+api-version: '${plugin.api.version}'
+folia-supported: true
+load: POSTWORLD
+description: Section-granular arena regeneration built for Folia / CanvasMC region threading.
+author: Dexer116
+commands:
+  arena:
+    description: Create, reset and manage arenas.
+    usage: |-
+      /arena create <name>
+      /arena wand
+      /arena reset <name> [full]
+      /arena list
+      /arena delete <name>
+    permission: syncarenas.admin
+permissions:
+  syncarenas.admin:
+    description: Full access to every /arena subcommand.
+    default: op

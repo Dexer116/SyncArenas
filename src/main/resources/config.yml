@@ -1,0 +1,64 @@
+# SyncArenas
+#
+# Everything in here is tuned for "never be felt by the region threads".
+# The restore pipeline does all I/O, decompression and decoding on the async
+# scheduler; region threads only ever run the raw block writes, in slices that
+# are bounded by `restore.region-budget-micros`.
+
+restore:
+  # Hard wall-clock budget for a single region-thread slice, in microseconds.
+  # A slice stops as soon as this is exceeded and resumes on the next tick of
+  # that region. 400us on a 50ms tick is <1% of a region's tick budget.
+  region-budget-micros: 400
+
+  # How many block writes to perform between two System.nanoTime() checks.
+  # Lower = tighter budget adherence, higher = less clock overhead.
+  blocks-per-budget-check: 256
+
+  # How many chunks may be restored at the same time. Each one is an
+  # independent task on the region thread that owns it, so on Folia/Canvas
+  # this is what spreads a reset across region threads. Raise it for faster
+  # resets, lower it to be gentler.
+  max-concurrent-chunks: 8
+
+  # Read the current block before writing and skip it when it already matches
+  # the snapshot. Reads are much cheaper than writes (no light update, no
+  # block change packet), so this is a large win for sections that only had a
+  # handful of blocks broken. Keep it on.
+  skip-unchanged-blocks: true
+
+  # Keep a chunk loaded (plugin chunk ticket) while it is being restored, so it
+  # cannot unload halfway through a multi-tick restore.
+  hold-chunk-tickets: true
+
+capture:
+  # Chunks snapshotted in parallel while creating an arena. Capture only takes
+  # a ChunkSnapshot on the region thread (cheap); palette building, compression
+  # and disk writes happen async.
+  max-concurrent-chunks: 4
+
+  # Deflate level for the .sa section payloads (0-9). 4 is a good size/speed
+  # trade-off; raise it if snapshot size matters more than creation time.
+  compression-level: 4
+
+tracking:
+  # Persist the dirty-section set to disk every N minutes so a restart or crash
+  # cannot lose track of what still needs restoring. 0 disables the timer (the
+  # set is still saved on shutdown).
+  autosave-minutes: 5
+
+  # Fluid flow (water/lava spreading) marks sections dirty. Turn this off only
+  # if your arenas contain no fluids at all.
+  track-fluid-flow: true
+
+  # Pistons moving blocks mark sections dirty.
+  track-pistons: true
+
+limits:
+  # Refuse to create arenas larger than this many blocks (0 = no limit).
+  # 134217728 is roughly a 1024 x 128 x 1024 arena.
+  max-arena-blocks: 0
+
+wand:
+  # Item handed out by /arena wand.
+  material: GOLDEN_AXE

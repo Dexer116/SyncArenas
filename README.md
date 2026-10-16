@@ -183,12 +183,17 @@ mvn clean package      # -> target/SyncArenas-1.0.0.jar
 mvn test               # format and geometry tests, no server needed
 ```
 
+Releases are built by [`.github/workflows/release.yml`](.github/workflows/release.yml): it resolves
+the newest `paper-api` build matching `plugin.yml`'s `api-version`, runs `mvn verify` so the tests
+gate the release, and publishes the jar. Push a `v*` tag or run the workflow manually.
+
 Paper is not published to Maven Central, so the build resolves `paper-api` from
-`https://repo.papermc.io/repository/maven-public/`. Since Minecraft 26.3 Paper's artifact version
-is `<mcVersion>.build.<number>-<channel>`, so set the exact build you develop against:
+`https://repo.papermc.io/repository/maven-public/`. Since Minecraft 26.3 Paper's artifact version is
+`<mcVersion>.build.<number>-<channel>`; the pom pins `26.3.build.199-stable`. To build against a
+different build, override it:
 
 ```bash
-mvn -Dpaper.api.version=26.3.build.123-stable clean package
+mvn -Dpaper.api.version=26.3.build.210-stable clean package
 ```
 
 or edit the `paper.api.version` property in [`pom.xml`](pom.xml). Building against the

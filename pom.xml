@@ -18,7 +18,7 @@
              bytecode and a JDK 25 (or newer) is required to compile against them. -->
         <maven.compiler.release>25</maven.compiler.release>
         <!-- Pick the exact build you develop against; see README.md ("Building"). -->
-        <paper.api.version>26.3.build.1-stable</paper.api.version>
+        <paper.api.version>26.3.build.199-stable</paper.api.version>
         <!-- Value written into plugin.yml's api-version. -->
         <plugin.api.version>26.3</plugin.api.version>
         <junit.version>5.11.4</junit.version>

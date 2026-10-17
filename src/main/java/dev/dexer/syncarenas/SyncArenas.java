@@ -7,6 +7,7 @@ import dev.dexer.syncarenas.listener.FluidFlowTrackingListener;
 import dev.dexer.syncarenas.listener.PistonTrackingListener;
 import dev.dexer.syncarenas.listener.WandListener;
 import dev.dexer.syncarenas.service.CaptureService;
+import dev.dexer.syncarenas.service.IntervalService;
 import dev.dexer.syncarenas.service.RestoreService;
 import dev.dexer.syncarenas.service.SelectionService;
 import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
@@ -36,6 +37,7 @@ public final class SyncArenas extends JavaPlugin {
     private CaptureService captures;
     private RestoreService restores;
     private ScheduledTask autosaveTask;
+    private IntervalService intervals;
 
     @Override
     public void onEnable() {
@@ -47,6 +49,8 @@ public final class SyncArenas extends JavaPlugin {
         this.restores = new RestoreService(this);
 
         this.arenas.loadAll();
+        this.intervals = new IntervalService(this);
+        this.intervals.start();
 
         final PluginManager events = this.getServer().getPluginManager();
         events.registerEvents(new BlockTrackingListener(this), this);
@@ -87,6 +91,9 @@ public final class SyncArenas extends JavaPlugin {
         if (this.autosaveTask != null) {
             this.autosaveTask.cancel();
             this.autosaveTask = null;
+        }
+        if (this.intervals != null) {
+            this.intervals.stop();
         }
         if (this.restores != null) {
             // Gives every section that did not make it back to its arena's dirty set first.

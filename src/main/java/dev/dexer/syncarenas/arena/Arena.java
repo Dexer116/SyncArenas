@@ -39,6 +39,8 @@ public final class Arena {
     private volatile long snapshotBytes;
     private volatile long lastReset;
     private volatile boolean dirtyStateUnsaved;
+    private volatile int intervalSeconds;
+    private volatile long nextReset;
 
     public Arena(final String name, final String worldName, final UUID worldId,
                  final ArenaBounds bounds, final long createdAt) {
@@ -96,6 +98,25 @@ public final class Arena {
 
     public void lastReset(final long millis) {
         this.lastReset = millis;
+    }
+
+    /** Seconds between automatic resets, 0 when off. */
+    public int intervalSeconds() {
+        return this.intervalSeconds;
+    }
+
+    public void intervalSeconds(final int seconds) {
+        this.intervalSeconds = Math.max(0, seconds);
+        this.scheduleNext(System.nanoTime());
+    }
+
+    /** {@link System#nanoTime()} deadline of the next automatic reset. */
+    public long nextReset() {
+        return this.nextReset;
+    }
+
+    public void scheduleNext(final long nowNanos) {
+        this.nextReset = nowNanos + this.intervalSeconds * 1_000_000_000L;
     }
 
     public State state() {

@@ -13,6 +13,7 @@ commands:
       /arena create <name>
       /arena wand
       /arena reset <name> [full]
+      /arena interval <name> <seconds|off>
       /arena list
       /arena delete <name>
     permission: syncarenas.admin

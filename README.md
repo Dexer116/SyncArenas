@@ -35,6 +35,7 @@ All of them need the `syncarenas.admin` permission (`op` by default).
 | `/arena create <name>` | Snapshots the current selection into `<name>.sa` and starts tracking it. |
 | `/arena reset <name>` | Restores every section that was touched since the last reset. |
 | `/arena reset <name> full` | Restores every section of the arena, dirty or not. Safety net, not the normal path. |
+| `/arena interval <name> <seconds\|off>` | Resets the arena automatically every N seconds (skipped when nothing is dirty). Saved in the arena's `.json`; `off` or `0` disables. |
 | `/arena list` | Lists arenas with size, section count, dirty sections and current state. |
 | `/arena delete <name>` | Unregisters the arena and deletes its `.json` and `.sa` files. |
 
@@ -193,7 +194,7 @@ Lower the budget - a reset simply takes more ticks.
 ## Building
 
 ```bash
-mvn clean package      # -> target/SyncArenas-1.0.2.jar
+mvn clean package      # -> target/SyncArenas-1.0.3.jar
 mvn test               # format and geometry tests, no server needed
 ```
 

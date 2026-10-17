@@ -30,7 +30,7 @@ import org.bukkit.persistence.PersistentDataType;
 public final class ArenaCommand implements TabExecutor {
 
     private static final Pattern VALID_NAME = Pattern.compile("[A-Za-z0-9_-]{1,32}");
-    private static final List<String> SUBCOMMANDS = List.of("create", "wand", "reset", "list", "delete");
+    private static final List<String> SUBCOMMANDS = List.of("create", "wand", "reset", "interval", "list", "delete");
 
     private final SyncArenas plugin;
 
@@ -53,6 +53,7 @@ public final class ArenaCommand implements TabExecutor {
             case "create" -> this.create(sender, label, args);
             case "wand" -> this.wand(sender);
             case "reset" -> this.reset(sender, label, args);
+            case "interval" -> this.interval(sender, label, args);
             case "list" -> this.list(sender);
             case "delete", "remove" -> this.delete(sender, label, args);
             default -> this.usage(sender, label);
@@ -65,6 +66,7 @@ public final class ArenaCommand implements TabExecutor {
         Msg.send(this.plugin, sender, "§f/" + label + " create <name> §7- snapshot your selection");
         Msg.send(this.plugin, sender, "§f/" + label + " wand §7- get the selection wand");
         Msg.send(this.plugin, sender, "§f/" + label + " reset <name> [full] §7- restore broken sections");
+        Msg.send(this.plugin, sender, "\u00a7f/" + label + " interval <name> <seconds|off> \u00a77- auto reset");
         Msg.send(this.plugin, sender, "§f/" + label + " list §7- list arenas");
         Msg.send(this.plugin, sender, "§f/" + label + " delete <name> §7- drop an arena");
     }
@@ -219,6 +221,37 @@ public final class ArenaCommand implements TabExecutor {
             + " §7of region thread time in total.");
     }
 
+    // --- interval -------------------------------------------------------------------------------
+
+    private void interval(final CommandSender sender, final String label, final String[] args) {
+        if (args.length < 3) {
+            Msg.send(this.plugin, sender, "\u00a7cUsage: \u00a7f/" + label + " interval <name> <seconds|off>");
+            return;
+        }
+        final Arena arena = this.plugin.arenas().get(args[1]);
+        if (arena == null) {
+            Msg.send(this.plugin, sender, "\u00a7cNo arena called \u00a7f" + args[1] + "\u00a7c.");
+            return;
+        }
+        int seconds = 0;
+        if (!args[2].equalsIgnoreCase("off")) {
+            try {
+                seconds = Integer.parseInt(args[2]);
+            } catch (final NumberFormatException ex) {
+                seconds = -1;
+            }
+            if (seconds < 0) {
+                Msg.send(this.plugin, sender, "\u00a7cSeconds must be a whole number, or \u00a7foff\u00a7c.");
+                return;
+            }
+        }
+        arena.intervalSeconds(seconds);
+        Bukkit.getAsyncScheduler().runNow(this.plugin, task -> this.plugin.arenas().save(arena));
+        Msg.send(this.plugin, sender, seconds == 0
+            ? "\u00a77Automatic reset of \u00a7f" + arena.name() + " \u00a77is \u00a7coff\u00a77."
+            : "\u00a7f" + arena.name() + " \u00a77now resets every \u00a7f" + seconds + "s\u00a77.");
+    }
+
     // --- list -----------------------------------------------------------------------------------
 
     private void list(final CommandSender sender) {
@@ -235,6 +268,7 @@ public final class ArenaCommand implements TabExecutor {
                 + arena.worldName() + " §8| §7" + bounds.sizeX() + "x" + bounds.sizeY()
                 + "x" + bounds.sizeZ() + " §8| §7" + Msg.count(arena.snapshotSections())
                 + " sections §8| §e" + Msg.count(arena.dirtyCount()) + " dirty"
+                + (arena.intervalSeconds() > 0 ? " \u00a78| \u00a7b" + arena.intervalSeconds() + "s" : "")
                 + (arena.state() == Arena.State.IDLE ? "" : " §8| §c"
                     + arena.state().name().toLowerCase(Locale.ROOT)));
         }
@@ -284,13 +318,16 @@ public final class ArenaCommand implements TabExecutor {
             return prefixed(SUBCOMMANDS, args[0]);
         }
         final String sub = args[0].toLowerCase(Locale.ROOT);
-        if (args.length == 2 && (sub.equals("reset") || sub.equals("delete") || sub.equals("remove"))) {
+        if (args.length == 2 && (sub.equals("reset") || sub.equals("interval") || sub.equals("delete") || sub.equals("remove"))) {
             final List<String> names = new ArrayList<>(this.plugin.arenas().size());
             for (final Arena arena : this.plugin.arenas().all()) {
                 names.add(arena.name());
             }
             names.sort(String::compareToIgnoreCase);
             return prefixed(names, args[1]);
+        }
+        if (args.length == 3 && sub.equals("interval")) {
+            return prefixed(List.of("off", "30", "60", "300"), args[2]);
         }
         if (args.length == 3 && sub.equals("reset")) {
             return prefixed(List.of("full"), args[2]);

@@ -102,6 +102,9 @@ public final class ArenaStore {
         if (root.has("lastReset")) {
             arena.lastReset(root.get("lastReset").getAsLong());
         }
+        if (root.has("intervalSeconds")) {
+            arena.intervalSeconds(root.get("intervalSeconds").getAsInt());
+        }
         if (root.has("dirtySections")) {
             final JsonArray dirty = root.getAsJsonArray("dirtySections");
             for (final JsonElement entry : dirty) {
@@ -127,6 +130,7 @@ public final class ArenaStore {
         root.addProperty("blocks", arena.bounds().blockCount());
         root.addProperty("createdAt", arena.createdAt());
         root.addProperty("lastReset", arena.lastReset());
+        root.addProperty("intervalSeconds", arena.intervalSeconds());
         final JsonArray dirty = new JsonArray();
         for (final Long section : arena.dirtyView()) {
             dirty.add(section);

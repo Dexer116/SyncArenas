@@ -1,6 +1,8 @@
 Section-granular arena regeneration for Folia / CanvasMC.
 
-Download `SyncArenas-1.0.1.jar` below and drop it into `plugins/`.
+Download `SyncArenas-1.0.3.jar` below and drop it into `plugins/`.
+
+New in 1.0.3: `/arena interval <name> <seconds|off>` resets an arena automatically every N seconds (skipped when nothing is dirty), saved as `intervalSeconds` in the arena's `.json`. Also: `tracking.track-fluid-flow` / `track-pistons` set to `false` now register no handler at all.
 
 > **Use this release, not v1.0.0.** v1.0.0 was built against the 26.3 API and shipped Java 25
 > bytecode, so anything older refused it with `Unsupported API version 26.3`. Nothing in the plugin
